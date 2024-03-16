@@ -1,11 +1,10 @@
 import os
 import numpy as np
 import matplotlib.pyplot as plt 
-##%matplotlib inline
-import nibabel as nib # common way of importing nibabel
+import nibabel as nib
 
 ##carga la imagen
-mri_file = 'brain_ct.nii'
+mri_file = ' '
 img = nib.load(mri_file)
 ##Guarda las dimensiones de la imagen
 dimensiones= img.shape
