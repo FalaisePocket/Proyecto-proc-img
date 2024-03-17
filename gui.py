@@ -9,7 +9,7 @@ import nibabel as nib
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-
+from umbral import umbralization
 
 mainWindow=tk.Tk()
 
@@ -40,29 +40,55 @@ def changeFile():
     currentFileData = currentFile.get_fdata()
     currentImage = currentFileData[currentImageSlice]
     ###Dibujo
-
+    slider.config(from_=0, to=currentFileData.shape[2]-1,command=changeImage)
     Draw()
 
+
 def Draw():
-    figura = Figure()
+    global lienzo
+    global figura
+    global subplot
+    figura = Figure(figsize=(5, 4))
     subplot = figura.add_subplot(111)
-    subplot.imshow(currentImage, cmap='viridis', interpolation='nearest')
+    subplot.imshow(currentImage, cmap='gray', interpolation='nearest',aspect="auto")
+
 
     lienzo = FigureCanvasTkAgg(figura, master=imageFrame)
     lienzo.draw()
     lienzo.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
 
+def refreshImageFrame():
+    subplot.clear()
+    subplot.imshow(currentImage, cmap='gray', interpolation='nearest',aspect="auto")
+    lienzo.draw()
 
 
-
-
+def changeImage(value):
+    global currentImage
+    global currentImageSlice
+    global lienzo
+    global figura
+    currentImage=currentFileData[int(float(value))]
+    refreshImageFrame()
 
 def plot_listener(event):
     # Obtener las coordenadas del evento
     x = event.xdata
     y = event.ydata
     if x is not None and y is not None:
-        print(f"Coordenadas del clic: x={x}, y={y}")    
+        print(f"Coordenadas del clic: x={x}, y={y}")
+
+    
+def handleUmbralization():
+    global currentFileData
+    newData=umbralization(currentFileData,128)
+    currentFileData=newData
+    refreshImageFrame()
+
+
+def button_click():
+    print('holas :3')
+
 
 def openFile():
     global currentFileDir
@@ -72,10 +98,9 @@ def openFile():
     try:
         currentFile = nib.load(currentFileDir)
         changeFile()
-
     except:
         0
-    print("Nyah~")
+    
 
 def salir():
     mainWindow.destroy()
@@ -115,10 +140,20 @@ viewFrame.grid(column=1,row=2, columnspan=2)
 
 
 ###Lateral de barra de herramientas#####################################
+buttonUmbral = tk.Button(toolFrame, text="Umbralization", command=handleUmbralization)
+buttonUmbral.pack(pady=20)
+buttonIsoData = tk.Button(toolFrame, text="ISOData", command=button_click)
+buttonIsoData.pack(pady=20)
+buttonRegionGrowing = tk.Button(toolFrame, text="Region Growing", command=button_click)
+buttonRegionGrowing.pack(pady=20)
+buttonKMeans = tk.Button(toolFrame, text="K-Means", command=button_click)
+buttonKMeans.pack(pady=20)
 ########################################################################
 
 ###Layout de imagen#####################################################
-
+figura=0
+lienzo=0
+subplot=0
 ########################################################################
 
 ###Barra de slider de la imagen y rotacion##############################
