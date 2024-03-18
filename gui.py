@@ -110,8 +110,6 @@ def salir():
 ###menu de control a lo photoshop#######################################
 controlMenu=tk.Menu(mainWindow)
 mainWindow.config(menu=controlMenu)
-
-
 menu_archivo = tk.Menu(controlMenu,tearoff=0)
 controlMenu.add_cascade(label="File", menu=menu_archivo)
 menu_archivo.add_command(label="Open File...", command=openFile)
@@ -156,17 +154,13 @@ lienzo=0
 subplot=0
 ########################################################################
 
+
+
 ###Barra de slider de la imagen y rotacion##############################
 ##slider de imagenes
 slider=ttk.Scale(viewFrame)
 slider.pack()
 
 ########################################################################
-
-
-
-
-
-
 
 mainWindow.mainloop()
