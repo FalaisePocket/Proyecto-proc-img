@@ -10,6 +10,10 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 from umbral import umbralization
+from isoData import isoData
+from regionGrowing import region_growing_3d
+
+
 
 mainWindow=tk.Tk()
 
@@ -84,7 +88,17 @@ def handleUmbralization():
     newData=umbralization(currentFileData,128)
     currentFileData=newData
     refreshImageFrame()
+def handleISOData():
+    global currentFileData
+    newData=isoData(currentFileData,128)
+    currentFileData=newData
+    refreshImageFrame()
 
+def handleRegionGrowing():
+    global currentFileData
+    newData=region_growing_3d(currentFileData,(125,75,125),128)
+    currentFileData=newData
+    refreshImageFrame()
 
 def button_click():
     print('holas :3')
@@ -140,9 +154,9 @@ viewFrame.grid(column=1,row=2, columnspan=2)
 ###Lateral de barra de herramientas#####################################
 buttonUmbral = tk.Button(toolFrame, text="Umbralization", command=handleUmbralization)
 buttonUmbral.pack(pady=20)
-buttonIsoData = tk.Button(toolFrame, text="ISOData", command=button_click)
+buttonIsoData = tk.Button(toolFrame, text="ISOData", command=handleISOData)
 buttonIsoData.pack(pady=20)
-buttonRegionGrowing = tk.Button(toolFrame, text="Region Growing", command=button_click)
+buttonRegionGrowing = tk.Button(toolFrame, text="Region Growing", command=handleRegionGrowing)
 buttonRegionGrowing.pack(pady=20)
 buttonKMeans = tk.Button(toolFrame, text="K-Means", command=button_click)
 buttonKMeans.pack(pady=20)
