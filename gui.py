@@ -1,14 +1,10 @@
 import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog
-import os
-import numpy as np
-import matplotlib.pyplot as plt 
 import nibabel as nib
-
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-
+import numpy as np
 from umbral import umbralization
 from isoData import isoData
 from regionGrowing import region_growing_3d
@@ -29,11 +25,15 @@ currentFileHeader = 0
 currentImage=0
 currentImageSlice=0
 
+currentPosition=0
+
 ##El valor del color
 currentColor=0
 
+y_click=0
+x_click=0
 
-coordinates=[0,0]
+
 #####Listeners####################
 def changeFile():
     global currentFileData
@@ -60,6 +60,8 @@ def Draw():
     lienzo = FigureCanvasTkAgg(figura, master=imageFrame)
     lienzo.draw()
     lienzo.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+    lienzo.mpl_connect('button_press_event', plot_listener)
+
 
 def refreshImageFrame():
     subplot.clear()
@@ -72,15 +74,20 @@ def changeImage(value):
     global currentImageSlice
     global lienzo
     global figura
-    currentImage=currentFileData[int(float(value))]
+    intValue=int(float(value))
+    currentImage=currentFileData[intValue]
+    currentImageSlice=intValue
     refreshImageFrame()
 
 def plot_listener(event):
+     global x_click
+     global y_click
     # Obtener las coordenadas del evento
-    x = event.xdata
-    y = event.ydata
-    if x is not None and y is not None:
-        print(f"Coordenadas del clic: x={x}, y={y}")
+     if event.xdata is not None and event.ydata is not None:
+    
+        x_click = int(event.xdata)
+        y_click = int(event.ydata)
+    
 
     
 def handleUmbralization():
@@ -96,25 +103,36 @@ def handleISOData():
 
 def handleRegionGrowing():
     global currentFileData
-    newData=region_growing_3d(currentFileData,(125,75,125),128)
+
+    newData=region_growing_3d(currentFileData,(currentImageSlice, y_click , x_click),50)
     currentFileData=newData
     refreshImageFrame()
 
 def button_click():
-    print('holas :3')
+    print('...')
 
 
 def openFile():
     global currentFileDir
     global currentFile
-    print(currentFileDir)
     currentFileDir = filedialog.askopenfilename( filetypes=(("Archivos nifti", "*.nii"),("Archivos Nifti comprimidos","*.nii.gz")))
     try:
         currentFile = nib.load(currentFileDir)
         changeFile()
     except:
         0
-    
+def saveFile():
+    global currentFileData
+
+    file_path = filedialog.asksaveasfilename(defaultextension=".nii", filetypes=[("NIfTI files", "*.nii")])
+    if file_path:
+
+        newNii= nib.Nifti1Image(np.array(currentFileData), currentFile.affine)
+        nib.save(newNii, file_path)
+    else:
+        print('error al guardar')
+
+
 
 def salir():
     mainWindow.destroy()
@@ -127,6 +145,7 @@ mainWindow.config(menu=controlMenu)
 menu_archivo = tk.Menu(controlMenu,tearoff=0)
 controlMenu.add_cascade(label="File", menu=menu_archivo)
 menu_archivo.add_command(label="Open File...", command=openFile)
+menu_archivo.add_command(label="Save File", command= saveFile)
 menu_archivo.add_separator()
 menu_archivo.add_command(label="Exit", command=salir)
 ########################################################################
