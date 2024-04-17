@@ -8,11 +8,14 @@ import numpy as np
 from umbral import umbralization
 from isoData import isoData
 from regionGrowing import region_growing_3d
-
-
+from preprocessing.histogramMatching import histogram_matching
+from preprocessing.rescaling import resize_image
+from preprocessing.whiteStripe import whiteStripe
+from preprocessing.zscore import zScore
+from filters.meanFilter import meanFilter
+from filters.medianFilter import medianFilter
 
 mainWindow=tk.Tk()
-
 
 
 
@@ -45,6 +48,7 @@ def changeFile():
     currentImage = currentFileData[currentImageSlice]
     ###Dibujo
     slider.config(from_=0, to=currentFileData.shape[2]-1,command=changeImage)
+    print(currentFileData[156])
     Draw()
 
 
@@ -108,7 +112,41 @@ def handleRegionGrowing():
     currentFileData=newData
     refreshImageFrame()
 
+def handleHistogramMatching():
+    global currentFileData
+def handleRescaling():
+    global currentFileData
+    newData= resize_image()
+def handleWhiteStripe():
+    global currentFileData  
+    newData= whiteStripe(currentFileData)
+    currentFileData = newData
+    print(currentFileData[150])
+    refreshImageFrame()
+
+def handleZScore():
+    global currentFileData
+    newData=zScore(currentFileData)
+    currentFileData=newData
+    print('Done')
+    refreshImageFrame()
+
+def handleMeanFilter():
+    global currentFileData
+    newData=meanFilter(currentFileData)
+    currentFileData=newData
+    refreshImageFrame()
+
+def handleMedianFilter():
+    global currentFileData
+    newData=medianFilter(currentFileData)
+    currentFileData=newData
+    refreshImageFrame()
+
+
 def button_click():
+    global currentFileData
+    print (type(currentFileData))
     print('...')
 
 
@@ -172,13 +210,32 @@ viewFrame.grid(column=1,row=2, columnspan=2)
 
 ###Lateral de barra de herramientas#####################################
 buttonUmbral = tk.Button(toolFrame, text="Umbralization", command=handleUmbralization)
-buttonUmbral.pack(pady=20)
+buttonUmbral.pack(pady=10)
 buttonIsoData = tk.Button(toolFrame, text="ISOData", command=handleISOData)
-buttonIsoData.pack(pady=20)
+buttonIsoData.pack(pady=10)
 buttonRegionGrowing = tk.Button(toolFrame, text="Region Growing", command=handleRegionGrowing)
-buttonRegionGrowing.pack(pady=20)
+buttonRegionGrowing.pack(pady=10)
 buttonKMeans = tk.Button(toolFrame, text="K-Means", command=button_click)
-buttonKMeans.pack(pady=20)
+buttonKMeans.pack(pady=10)
+
+
+
+##normalizacion
+buttonhistogram = tk.Button(toolFrame, text="Histogram Matching", command=button_click)
+buttonhistogram.pack(pady=10)
+buttonrescaling = tk.Button(toolFrame, text="Rescaling", command=button_click)
+buttonrescaling.pack(pady=10)
+buttonwhitestripe = tk.Button(toolFrame, text="White Stripe", command=handleWhiteStripe)
+buttonwhitestripe.pack(pady=10)
+buttonzscore = tk.Button(toolFrame, text="Z-Score", command=handleZScore)
+buttonzscore.pack(pady=10)
+
+##filters
+buttonMeanFilter = tk.Button(toolFrame, text="MeanFilter", command=handleMeanFilter)
+buttonMeanFilter.pack(pady=10)
+buttonMedianFilter = tk.Button(toolFrame, text="Median Filter", command=handleMedianFilter)
+buttonMedianFilter.pack(pady=10)
+
 ########################################################################
 
 ###Layout de imagen#####################################################
