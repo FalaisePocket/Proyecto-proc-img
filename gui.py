@@ -14,6 +14,10 @@ from preprocessing.whiteStripe import whiteStripe
 from preprocessing.zscore import zScore
 from filters.meanFilter import meanFilter
 from filters.medianFilter import medianFilter
+from PIL import Image,ImageTk
+from registro.registro import registro
+
+
 
 mainWindow=tk.Tk()
 
@@ -25,16 +29,23 @@ currentFile=0
 
 currentFileData = 0
 currentFileHeader = 0
+
 currentImage=0
 currentImageSlice=0
 
 currentPosition=0
+
+
+images=[]
 
 ##El valor del color
 currentColor=0
 
 y_click=0
 x_click=0
+
+
+
 
 
 #####Listeners####################
@@ -45,10 +56,12 @@ def changeFile():
     global currentImageSlice
     currentFileHeader= currentFile.header
     currentFileData = currentFile.get_fdata()
-    currentImage = currentFileData[currentImageSlice]
+    transformDataToImage()
+    currentImage = images[currentImageSlice]
+
     ###Dibujo
     slider.config(from_=0, to=currentFileData.shape[2]-1,command=changeImage)
-    print(currentFileData[156])
+    
     Draw()
 
 
@@ -56,21 +69,57 @@ def Draw():
     global lienzo
     global figura
     global subplot
-    figura = Figure(figsize=(5, 4))
+    global images
+    global currentImageSlice
+    global imageFrame
+
+    
+    lienzo = tk.Label(imageFrame, image=images[currentImageSlice])
+    lienzo.pack( side=tk.TOP, fill=tk.BOTH, expand=1 )
+    '''
+    canvas = tk.Canvas(imageFrame)
+    canvas.pack(fill=tk.BOTH, expand=True)  # Expandir para llenar toda la ventana
+
+    # Convertir la imagen a un formato compatible con Tkinter
+    tk_image = ImageTk.PhotoImage(original_image)
+
+    # Mostrar la imagen en el Canvas
+    image_item = canvas.create_image(0, 0, anchor=tk.NW, image=tk_image)
+
+    '''
+
+    '''figura = Figure(figsize=(5, 4))
     subplot = figura.add_subplot(111)
     subplot.imshow(currentImage, cmap='gray', interpolation='nearest',aspect="auto")
-
+    
 
     lienzo = FigureCanvasTkAgg(figura, master=imageFrame)
     lienzo.draw()
     lienzo.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
-    lienzo.mpl_connect('button_press_event', plot_listener)
+    lienzo.mpl_connect('button_press_event', plot_listener)'''
 
+
+
+
+
+def transformDataToImage():
+    global currentFileData
+    global images
+    images=[]
+    for slices in currentFileData:
+        img= Image.fromarray(slices) 
+        newimg= ImageTk.PhotoImage(img)
+        images.append(newimg)
 
 def refreshImageFrame():
-    subplot.clear()
+    global images
+    global currentImageSlice
+    global currentImage
+    
+    lienzo.configure( image=currentImage)
+    '''subplot.clear()
     subplot.imshow(currentImage, cmap='gray', interpolation='nearest',aspect="auto")
-    lienzo.draw()
+    lienzo.draw()'''
 
 
 def changeImage(value):
@@ -78,9 +127,11 @@ def changeImage(value):
     global currentImageSlice
     global lienzo
     global figura
+
     intValue=int(float(value))
-    currentImage=currentFileData[intValue]
+    currentImage=images[intValue]
     currentImageSlice=intValue
+
     refreshImageFrame()
 
 def plot_listener(event):
@@ -98,11 +149,15 @@ def handleUmbralization():
     global currentFileData
     newData=umbralization(currentFileData,128)
     currentFileData=newData
+    transformDataToImage()
     refreshImageFrame()
+
+
 def handleISOData():
     global currentFileData
     newData=isoData(currentFileData,128)
     currentFileData=newData
+    transformDataToImage()
     refreshImageFrame()
 
 def handleRegionGrowing():
@@ -110,43 +165,56 @@ def handleRegionGrowing():
 
     newData=region_growing_3d(currentFileData,(currentImageSlice, y_click , x_click),50)
     currentFileData=newData
+    transformDataToImage()
     refreshImageFrame()
 
 def handleHistogramMatching():
     global currentFileData
+
+
 def handleRescaling():
     global currentFileData
-    newData= resize_image()
+    newData= resize_image(currentFileData)
+    currentFileData=newData
+    transformDataToImage()
+    refreshImageFrame()
+
+
 def handleWhiteStripe():
     global currentFileData  
     newData= whiteStripe(currentFileData)
     currentFileData = newData
-    print(currentFileData[150])
+    transformDataToImage()
     refreshImageFrame()
 
 def handleZScore():
     global currentFileData
     newData=zScore(currentFileData)
     currentFileData=newData
-    print('Done')
+    transformDataToImage()
     refreshImageFrame()
 
 def handleMeanFilter():
     global currentFileData
     newData=meanFilter(currentFileData)
     currentFileData=newData
+    transformDataToImage()
     refreshImageFrame()
 
 def handleMedianFilter():
     global currentFileData
     newData=medianFilter(currentFileData)
     currentFileData=newData
+    transformDataToImage()
     refreshImageFrame()
+
+def handleRegistration():
+    global currentFileDir
+    registro(currentFileDir)
 
 
 def button_click():
     global currentFileData
-    print (type(currentFileData))
     print('...')
 
 
@@ -189,11 +257,6 @@ menu_archivo.add_command(label="Exit", command=salir)
 ########################################################################
 
 
-
-
-
-
-
 ###layout general#######################################################
 mainFrame=tk.Frame(mainWindow)
 mainFrame.pack()
@@ -210,35 +273,40 @@ viewFrame.grid(column=1,row=2, columnspan=2)
 
 ###Lateral de barra de herramientas#####################################
 buttonUmbral = tk.Button(toolFrame, text="Umbralization", command=handleUmbralization)
-buttonUmbral.pack(pady=10)
+buttonUmbral.grid(row=1, column=0, pady=10)
 buttonIsoData = tk.Button(toolFrame, text="ISOData", command=handleISOData)
-buttonIsoData.pack(pady=10)
+buttonIsoData.grid(row=2, column=0, pady=10)
 buttonRegionGrowing = tk.Button(toolFrame, text="Region Growing", command=handleRegionGrowing)
-buttonRegionGrowing.pack(pady=10)
+buttonRegionGrowing.grid(row=3, column=0, pady=10)
 buttonKMeans = tk.Button(toolFrame, text="K-Means", command=button_click)
-buttonKMeans.pack(pady=10)
+buttonKMeans.grid(row=0, column=0, pady=10)
 
 
 
 ##normalizacion
 buttonhistogram = tk.Button(toolFrame, text="Histogram Matching", command=button_click)
-buttonhistogram.pack(pady=10)
-buttonrescaling = tk.Button(toolFrame, text="Rescaling", command=button_click)
-buttonrescaling.pack(pady=10)
+buttonhistogram.grid(row=4, column=0, pady=10)
+buttonrescaling = tk.Button(toolFrame, text="Rescaling", command=handleRescaling)
+buttonrescaling.grid(row=0, column=1, pady=10)
 buttonwhitestripe = tk.Button(toolFrame, text="White Stripe", command=handleWhiteStripe)
-buttonwhitestripe.pack(pady=10)
+buttonwhitestripe.grid(row=1, column=1, pady=10)
 buttonzscore = tk.Button(toolFrame, text="Z-Score", command=handleZScore)
-buttonzscore.pack(pady=10)
+buttonzscore.grid(row=2, column=1, pady=10)
 
 ##filters
-buttonMeanFilter = tk.Button(toolFrame, text="MeanFilter", command=handleMeanFilter)
-buttonMeanFilter.pack(pady=10)
+buttonMeanFilter = tk.Button(toolFrame, text="Mean Filter", command=handleMeanFilter)
+buttonMeanFilter.grid(row=3, column=1, pady=10)
 buttonMedianFilter = tk.Button(toolFrame, text="Median Filter", command=handleMedianFilter)
-buttonMedianFilter.pack(pady=10)
+buttonMedianFilter.grid(row=4, column=1, pady=10)
+
+buttonRegistration = tk.Button(toolFrame, text="Registration", command=handleRegistration)
+buttonRegistration.grid(row=5, column=0, pady=10)  
 
 ########################################################################
 
 ###Layout de imagen#####################################################
+
+
 figura=0
 lienzo=0
 subplot=0
