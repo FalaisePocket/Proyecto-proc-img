@@ -16,7 +16,7 @@ from filters.meanFilter import meanFilter
 from filters.medianFilter import medianFilter
 from PIL import Image,ImageTk
 from registro.registro import registro
-
+from kmeans import kmeans
 
 
 mainWindow=tk.Tk()
@@ -56,6 +56,7 @@ def changeFile():
     global currentImageSlice
     currentFileHeader= currentFile.header
     currentFileData = currentFile.get_fdata()
+    print(currentFileData)
     transformDataToImage()
     currentImage = images[currentImageSlice]
 
@@ -76,29 +77,8 @@ def Draw():
     
     lienzo = tk.Label(imageFrame, image=images[currentImageSlice])
     lienzo.pack( side=tk.TOP, fill=tk.BOTH, expand=1 )
-    '''
-    canvas = tk.Canvas(imageFrame)
-    canvas.pack(fill=tk.BOTH, expand=True)  # Expandir para llenar toda la ventana
-
-    # Convertir la imagen a un formato compatible con Tkinter
-    tk_image = ImageTk.PhotoImage(original_image)
-
-    # Mostrar la imagen en el Canvas
-    image_item = canvas.create_image(0, 0, anchor=tk.NW, image=tk_image)
-
-    '''
-
-    '''figura = Figure(figsize=(5, 4))
-    subplot = figura.add_subplot(111)
-    subplot.imshow(currentImage, cmap='gray', interpolation='nearest',aspect="auto")
+    lienzo.bind("<Button-1>",handleClick)
     
-
-    lienzo = FigureCanvasTkAgg(figura, master=imageFrame)
-    lienzo.draw()
-    lienzo.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
-    lienzo.mpl_connect('button_press_event', plot_listener)'''
-
-
 
 
 
@@ -117,9 +97,7 @@ def refreshImageFrame():
     global currentImage
     
     lienzo.configure( image=currentImage)
-    '''subplot.clear()
-    subplot.imshow(currentImage, cmap='gray', interpolation='nearest',aspect="auto")
-    lienzo.draw()'''
+
 
 
 def changeImage(value):
@@ -134,15 +112,17 @@ def changeImage(value):
 
     refreshImageFrame()
 
-def plot_listener(event):
-     global x_click
-     global y_click
+def handleClick(event):
+    global x_click
+    global y_click
     # Obtener las coordenadas del evento
-     if event.xdata is not None and event.ydata is not None:
+    if event.x is not None and event.y is not None:
     
-        x_click = int(event.xdata)
-        y_click = int(event.ydata)
-    
+        x_click = int(event.x)
+        y_click = int(event.y)
+
+    print(x_click)
+    print(y_click)
 
     
 def handleUmbralization():
@@ -163,13 +143,17 @@ def handleISOData():
 def handleRegionGrowing():
     global currentFileData
 
-    newData=region_growing_3d(currentFileData,(currentImageSlice, y_click , x_click),50)
+    newData=region_growing_3d(currentFileData,(currentImageSlice, y_click , x_click),128)
     currentFileData=newData
     transformDataToImage()
     refreshImageFrame()
 
 def handleHistogramMatching():
     global currentFileData
+    newData=histogram_matching(currentFileData)
+    currentFileData=newData
+    transformDataToImage()
+    refreshImageFrame()
 
 
 def handleRescaling():
@@ -211,6 +195,14 @@ def handleMedianFilter():
 def handleRegistration():
     global currentFileDir
     registro(currentFileDir)
+
+
+def handleKMeans():
+    global currentFileData
+    newData=kmeans(currentFileData)
+    currentFileData=newData
+    transformDataToImage()
+    refreshImageFrame()
 
 
 def button_click():
@@ -278,13 +270,13 @@ buttonIsoData = tk.Button(toolFrame, text="ISOData", command=handleISOData)
 buttonIsoData.grid(row=2, column=0, pady=10)
 buttonRegionGrowing = tk.Button(toolFrame, text="Region Growing", command=handleRegionGrowing)
 buttonRegionGrowing.grid(row=3, column=0, pady=10)
-buttonKMeans = tk.Button(toolFrame, text="K-Means", command=button_click)
+buttonKMeans = tk.Button(toolFrame, text="K-Means", command=handleKMeans)
 buttonKMeans.grid(row=0, column=0, pady=10)
 
 
 
 ##normalizacion
-buttonhistogram = tk.Button(toolFrame, text="Histogram Matching", command=button_click)
+buttonhistogram = tk.Button(toolFrame, text="Histogram Matching", command=handleHistogramMatching)
 buttonhistogram.grid(row=4, column=0, pady=10)
 buttonrescaling = tk.Button(toolFrame, text="Rescaling", command=handleRescaling)
 buttonrescaling.grid(row=0, column=1, pady=10)
