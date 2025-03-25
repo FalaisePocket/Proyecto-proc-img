@@ -1,6 +1,6 @@
 import numpy as np
 
-def region_growing_3d(image, seed, threshold):
+def region_growing(image, seed, threshold):
     mask = np.zeros(image.shape)
 
     region_pixels = [seed]

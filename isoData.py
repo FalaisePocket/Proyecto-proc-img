@@ -1,5 +1,6 @@
+import numpy as np
 
-def isoData(slice,umbral):
+def isoData111(slice,umbral):
     img=slice
     f=0
     t=0
@@ -15,4 +16,38 @@ def isoData(slice,umbral):
         umbral_t=umbral_t1
         t+=1
     return f
+
+
+
+def isoData(image, initial_threshold, delta_t=0.005):
+    t = 0
+    tau = initial_threshold
+
+    while True:
+        # Aplicar umbralización
+        g_t = image >= tau
+        
+        # Calcular las medias de los píxeles en el foreground y background
+        if np.any(g_t):
+            m_foreground = np.mean(image[g_t])
+        else:
+            m_foreground = 0
+        
+        if np.any(~g_t):
+            m_background = np.mean(image[~g_t])
+        else:
+            m_background = 0
+        
+        # Actualizar el umbral
+        tau_new = 0.5 * (m_foreground + m_background)
+        
+        # Verificar condición de parada
+        if abs(tau_new - tau) < delta_t:
+            break
+        
+        tau = tau_new
+        t += 1
+
+    return g_t
+
 
