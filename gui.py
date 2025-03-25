@@ -8,14 +8,9 @@ import numpy as np
 from umbral import umbralization
 from isoData import isoData
 from regionGrowing import region_growing_3d
-from preprocessing.histogramMatching import histogram_matching
-from preprocessing.rescaling import resize_image
-from preprocessing.whiteStripe import whiteStripe
-from preprocessing.zscore import zScore
 from filters.meanFilter import meanFilter
 from filters.medianFilter import medianFilter
 from PIL import Image,ImageTk
-from registro.registro import registro
 from kmeans import kmeans
 
 
@@ -206,88 +201,6 @@ def drawLine(x0, y0, x1, y1):
 
 
 
-
-
-
-def handleUmbralization():
-    global currentFileData
-    newData=umbralization(currentFileData,128)
-    currentFileData=newData
-    transformDataToImage()
-    refreshImageFrame()
-
-
-def handleISOData():
-    global currentFileData
-    newData=isoData(currentFileData,128)
-    currentFileData=newData
-    transformDataToImage()
-    refreshImageFrame()
-
-def handleRegionGrowing():
-    global currentFileData
-    newData=region_growing_3d(currentFileData,(currentImageSlice, y_click , x_click),128)
-    currentFileData=newData
-    transformDataToImage()
-    refreshImageFrame()
-
-def handleHistogramMatching():
-    global currentFileData
-    newData=histogram_matching(currentFileData)
-    currentFileData=newData
-    transformDataToImage()
-    refreshImageFrame()
-
-
-def handleRescaling():
-    global currentFileData
-    newData= resize_image(currentFileData)
-    currentFileData=newData
-    transformDataToImage()
-    refreshImageFrame()
-
-
-def handleWhiteStripe():
-    global currentFileData  
-    newData= whiteStripe(currentFileData)
-    currentFileData = newData
-    transformDataToImage()
-    refreshImageFrame()
-
-def handleZScore():
-    global currentFileData
-    newData=zScore(currentFileData)
-    currentFileData=newData
-    transformDataToImage()
-    refreshImageFrame()
-
-def handleMeanFilter():
-    global currentFileData
-    newData=meanFilter(currentFileData)
-    currentFileData=newData
-    transformDataToImage()
-    refreshImageFrame()
-
-def handleMedianFilter():
-    global currentFileData
-    newData=medianFilter(currentFileData)
-    currentFileData=newData
-    transformDataToImage()
-    refreshImageFrame()
-
-def handleRegistration():
-    global currentFileDir
-    registro(currentFileDir)
-
-
-def handleKMeans():
-    global currentFileData
-    newData=kmeans(currentFileData)
-    currentFileData=newData
-    transformDataToImage()
-    refreshImageFrame()
-
-
 def process_image_data(processing_function, *args):
     """Aplica una función de procesamiento a currentFileData y actualiza la imagen."""
     global currentFileData
@@ -364,26 +277,15 @@ buttonKMeans.grid(row=0, column=0, pady=10)
 
 
 
-##normalizacion
-buttonhistogram = tk.Button(toolFrame, text="Histogram Matching", command=lambda: process_image_data(histogram_matching))
-buttonhistogram.grid(row=4, column=0, pady=10)
-buttonrescaling = tk.Button(toolFrame, text="Rescaling", command=lambda: process_image_data(resize_image))
-buttonrescaling.grid(row=0, column=1, pady=10)
-buttonwhitestripe = tk.Button(toolFrame, text="White Stripe", command=lambda: process_image_data(whiteStripe))
-buttonwhitestripe.grid(row=1, column=1, pady=10)
-buttonzscore = tk.Button(toolFrame, text="Z-Score", command=lambda: process_image_data(zScore))
-buttonzscore.grid(row=2, column=1, pady=10)
 
 ##filters
-#buttonMeanFilter = tk.Button(toolFrame, text="Mean Filter", command=handleMeanFilter)
+
 buttonMeanFilter = tk.Button(toolFrame, text="Mean Filter", command=lambda: process_image_data(meanFilter))
 
-buttonMeanFilter.grid(row=3, column=1, pady=10)
+buttonMeanFilter.grid(row=0, column=1, pady=10)
 buttonMedianFilter = tk.Button(toolFrame, text="Median Filter", command=lambda: process_image_data(medianFilter))
-buttonMedianFilter.grid(row=4, column=1, pady=10)
-
-buttonRegistration = tk.Button(toolFrame, text="Registration", command=lambda: process_image_data(registro))
-buttonRegistration.grid(row=5, column=0, pady=10)  
+buttonMedianFilter.grid(row=1, column=1, pady=10)
+ 
 
 ########################################################################
 
