@@ -30,6 +30,11 @@ currentImageSlice=0
 
 currentPosition=0
 
+#rotacion de la imagen
+s_i=''
+a_p=''
+r_l=''
+
 
 images=[]
 
@@ -40,11 +45,6 @@ y_click=0
 x_click=0
 
 overlay = None
-
-
-
-
-
 
 #####Listeners####################
 def changeFile():
@@ -119,12 +119,7 @@ def changeImage(value):
     currentImageSlice=intValue
     img = images[currentImageSlice].copy()  
     applyOverlay(img)  # Aplica la superposición de píxeles rojos
-
     currentImage = ImageTk.PhotoImage(img)  # Convierte la imagen
-
-
-    
-
     refreshImageFrame()
 
 
@@ -233,6 +228,14 @@ def saveFile():
         print('error al guardar')
 
 
+def rotate(axis,param,value):
+    global overlay, currentFile
+    newOrient=[r_l,a_p,s_i]
+    reoriented_img = currentFile.as_reoriented(nib.orientations.axcodes2ornt(newOrient))
+    currentFile=reoriented_img
+    changeFile()
+    Draw()
+
 
 def salir():
     mainWindow.destroy()
@@ -303,6 +306,7 @@ subplot=0
 ##slider de imagenes
 slider=ttk.Scale(viewFrame)
 slider.pack()
+
 
 # Lienzo donde se dibujará la imagen
 lienzo = tk.Label(imageFrame)

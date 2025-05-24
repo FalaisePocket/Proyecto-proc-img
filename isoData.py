@@ -1,6 +1,6 @@
 import numpy as np
-
-def isoData111(slice,umbral):
+###Funcion en desuso
+def isoDatah111(slice,umbral):
     img=slice
     f=0
     t=0
