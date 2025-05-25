@@ -12,6 +12,11 @@ from filters.meanFilter import meanFilter
 from filters.medianFilter import medianFilter
 from PIL import Image,ImageTk
 from kmeans import kmeans
+from preprocessing.histogramMatching import histogram_matching
+from preprocessing.rescaling import resize_image
+from preprocessing.whiteStripe import whiteStripe
+from preprocessing.zscore import zScore
+from registro.registro import registro
 
 
 mainWindow=tk.Tk()
@@ -279,6 +284,18 @@ buttonKMeans = tk.Button(toolFrame, text="K-Means", command=lambda: process_imag
 buttonKMeans.grid(row=0, column=0, pady=10)
 
 
+##Normalización
+
+buttonhistogram = tk.Button(toolFrame, text="Histogram Matching", command=lambda: process_image_data(histogram_matching))
+buttonhistogram.grid(row=4, column=0, pady=10)
+buttonrescaling = tk.Button(toolFrame, text="Rescaling", command=lambda: process_image_data(resize_image))
+buttonrescaling.grid(row=0, column=1, pady=10)
+buttonwhitestripe = tk.Button(toolFrame, text="White Stripe", command=lambda: process_image_data(whiteStripe))
+buttonwhitestripe.grid(row=1, column=1, pady=10)
+buttonzscore = tk.Button(toolFrame, text="Z-Score", command=lambda: process_image_data(zScore))
+buttonzscore.grid(row=2, column=1, pady=10)
+
+
 
 
 ##filters
@@ -291,6 +308,16 @@ buttonMedianFilter.grid(row=1, column=1, pady=10)
  
 
 ########################################################################
+
+###Registro###############################################
+
+buttonRegistration = tk.Button(toolFrame, text="Registration", command=lambda: process_image_data(registro))
+buttonRegistration.grid(row=5, column=0, pady=10) 
+
+
+##################################
+
+
 
 ###Layout de imagen#####################################################
 
