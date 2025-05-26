@@ -166,18 +166,32 @@ def handleClick(event):
     global x_click, y_click, currentButton
     currentButton = event.num
 
+    # CORRECCIÓN: Verificar que la imagen existe
+    if not images or currentImageSlice >= len(images):
+        return
+        
     img_w, img_h = images[currentImageSlice].size
     widget_w = lienzo.winfo_width()
     widget_h = lienzo.winfo_height()
+    
+    # CORRECCIÓN: Verificar divisiones por cero
+    if widget_w <= 0 or widget_h <= 0:
+        return
 
     scale_x = img_w / widget_w
     scale_y = img_h / widget_h
 
     x_img = int(event.x * scale_x)
     y_img = int(event.y * scale_y)
+    
+    # CORRECCIÓN: Verificar límites antes de asignar
+    if x_img < 0 or x_img >= img_w or y_img < 0 or y_img >= img_h:
+        return
 
-    x_click, y_click = x_img, y_img  # guarda coords de imagen, no del widget
+    x_click, y_click = x_img, y_img
 
+    print(f"Click en: widget({event.x}, {event.y}) -> imagen({x_img}, {y_img})")  # DEBUG
+    
     if currentButton == 1:
         drawPixel(x_img, y_img, value=1)
     elif currentButton == 3:
@@ -195,22 +209,33 @@ def handleDrag(event):
 
 def handleDrag(event):
     global x_click, y_click, currentButton
-    if currentButton is None:
+    if currentButton is None or x_click is None or y_click is None:
+        return
+        
+    # CORRECCIÓN: Verificar que la imagen existe
+    if not images or currentImageSlice >= len(images):
         return
 
     img_w, img_h = images[currentImageSlice].size
     widget_w = lienzo.winfo_width()
     widget_h = lienzo.winfo_height()
+    
+    # CORRECCIÓN: Verificar divisiones por cero
+    if widget_w <= 0 or widget_h <= 0:
+        return
 
     scale_x = img_w / widget_w
     scale_y = img_h / widget_h
 
     x_img = int(event.x * scale_x)
     y_img = int(event.y * scale_y)
+    
+    # CORRECCIÓN: Verificar límites
+    if x_img < 0 or x_img >= img_w or y_img < 0 or y_img >= img_h:
+        return
 
-    if x_click is not None and y_click is not None:
-        value = 1 if currentButton == 1 else -1
-        drawLine(x_click, y_click, x_img, y_img, value=value)
+    value = 1 if currentButton == 1 else -1
+    drawLine(x_click, y_click, x_img, y_img, value=value)
 
     x_click, y_click = x_img, y_img
 
@@ -221,11 +246,23 @@ def handleRelease(event):
 
 
 def drawPixel(x, y, value=1):
-    """Dibuja un píxel rojo en la matriz overlay"""
-    global overlay, currentImageSlice   
-    if 0 <= x < overlay.shape[1] and 0 <= y < overlay.shape[0]:
-        overlay[y, x, currentImageSlice] = value  # Marcar píxel en overlay
-        Draw()  # Actualizar la imagen
+    """Dibuja un píxel en la matriz overlay"""
+    global overlay, currentImageSlice
+    
+    print(f"Imagen PIL size: {images[currentImageSlice].size}")
+    print(f"Overlay shape: {overlay.shape}")
+    print(f"currentFileData shape: {currentFileData.shape}")
+    
+    # CORRECCIÓN: Verificar límites correctamente
+    if (0 <= x < overlay.shape[1] and 
+        0 <= y < overlay.shape[0] and 
+        0 <= currentImageSlice < overlay.shape[2]):
+        
+        overlay[y, x, currentImageSlice] = value
+        print(f"Píxel guardado. Valor en overlay[{y}, {x}, {currentImageSlice}] = {overlay[y, x, currentImageSlice]}")  # DEBUG
+        Draw()
+    else:
+        print(f"Coordenadas fuera de límites: x={x}, y={y}, slice={currentImageSlice}")  # DEBUG
 
 '''
 
@@ -257,6 +294,8 @@ def drawLine(x0, y0, x1, y1):
 '''
 def drawLine(x0, y0, x1, y1, value=1):
     global overlay, currentImageSlice
+    
+    print(f"drawLine: ({x0}, {y0}) -> ({x1}, {y1}) = {value}")  # DEBUG
 
     dx = abs(x1 - x0)
     dy = abs(y1 - y0)
@@ -265,7 +304,10 @@ def drawLine(x0, y0, x1, y1, value=1):
     err = dx - dy
 
     while True:
-        if 0 <= x0 < overlay.shape[1] and 0 <= y0 < overlay.shape[0]:
+        # CORRECCIÓN: Verificar límites en cada píxel
+        if (0 <= x0 < overlay.shape[1] and 
+            0 <= y0 < overlay.shape[0] and 
+            0 <= currentImageSlice < overlay.shape[2]):
             overlay[y0, x0, currentImageSlice] = value
 
         if x0 == x1 and y0 == y1:
@@ -280,7 +322,17 @@ def drawLine(x0, y0, x1, y1, value=1):
 
     Draw()
 
-
+def debug_overlay():
+    global overlay, currentImageSlice
+    if overlay is not None:
+        slice_data = overlay[:, :, currentImageSlice]
+        unique_values = np.unique(slice_data)
+        print(f"Slice {currentImageSlice} - Valores únicos en overlay: {unique_values}")
+        if len(unique_values) > 1:
+            for val in unique_values:
+                if val != 0:
+                    count = np.sum(slice_data == val)
+                    print(f"  Valor {val}: {count} píxeles")
 
 def process_image_data(processing_function, *args):
     """Aplica una función de procesamiento a currentFileData y actualiza la imagen."""
@@ -298,7 +350,8 @@ def apply_registration(moving_path):
     registered_img = nib.load('imagen_movil_registrada.nii')
     currentFile = registered_img
     currentFileData = registered_img.get_fdata()
-    overlay = np.zeros_like(currentFileData, dtype=np.uint8)
+    # CORRECCIÓN: Usar int8 consistentemente
+    overlay = np.zeros_like(currentFileData, dtype=np.int8)
     transformDataToImage()
     refreshImageFrame()
     Draw()
@@ -411,12 +464,32 @@ buttonRegistration.grid(row=5, column=0, pady=10)
 #########Laplacian###############
 
 def handleLaplacian():
+    global currentFileData, overlay, currentImageSlice
+    
+    print(f"=== DEBUG LAPLACIAN ===")
+    print(f"Current slice: {currentImageSlice}")
+    print(f"Overlay shape: {overlay.shape}")
+    
+    # Verificar si hay semillas en el slice actual
+    current_slice_overlay = overlay[:, :, currentImageSlice]
+    unique_vals = np.unique(current_slice_overlay)
+    print(f"Valores únicos en overlay slice {currentImageSlice}: {unique_vals}")
+    
+    for val in unique_vals:
+        if val != 0:
+            positions = np.where(current_slice_overlay == val)
+            print(f"Valor {val}: {len(positions[0])} píxeles")
+            if len(positions[0]) > 0:
+                print(f"  Primeras 5 posiciones: {list(zip(positions[0][:5], positions[1][:5]))}")
+
+'''
+def handleLaplacian():
     
     global currentFileData,overlay, currentImageSlice
 
     for line in overlay[currentImageSlice]:
         print(line)
-    '''seeds = overlay[currentImageSlice]
+    seeds = overlay[currentImageSlice]
     newSlice = laplacian_segmentation(currentFileData[currentImageSlice], seeds)
     currentFileData[currentImageSlice]=newSlice
 
@@ -429,6 +502,64 @@ def handleLaplacian():
     
     transformDataToImage()
     refreshImageFrame()'''
+
+def handleLaplacian():
+    global currentFileData, overlay, currentImageSlice
+    
+    print(f"=== PROCESANDO LAPLACIAN ===")
+    print(f"Slice actual: {currentImageSlice}")
+    
+    # Obtener el slice actual del overlay (semillas)
+    current_slice_overlay = overlay[:, :, currentImageSlice]
+    
+    # Obtener el slice actual de la imagen
+    current_image_slice = currentFileData[:, :, currentImageSlice].copy()
+    
+    # Verificar que tenemos semillas
+    unique_vals = np.unique(current_slice_overlay)
+    has_positive = np.any(current_slice_overlay == 1)
+    has_negative = np.any(current_slice_overlay == -1)
+    
+    print(f"Semillas en slice {currentImageSlice}: {unique_vals}")
+    print(f"Píxeles positivos: {np.sum(current_slice_overlay == 1)}")
+    print(f"Píxeles negativos: {np.sum(current_slice_overlay == -1)}")
+    
+    if not (has_positive and has_negative):
+        print("ERROR: Necesitas marcar tanto píxeles POSITIVOS (click izquierdo) como NEGATIVOS (click derecho)")
+        return
+    
+    print(f"Imagen slice shape: {current_image_slice.shape}")
+    print(f"Overlay slice shape: {current_slice_overlay.shape}")
+    print(f"Intensidades originales: {current_image_slice.min():.2f} - {current_image_slice.max():.2f}")
+    
+    try:
+        # Llamar a la función laplacian_segmentation con el slice actual
+        print("Ejecutando segmentación Laplaciana...")
+        segmented_slice = laplacian_segmentation(current_image_slice, current_slice_overlay)
+        
+        # REEMPLAZAR el slice en currentFileData
+        currentFileData[:, :, currentImageSlice] = segmented_slice
+        
+        print("✅ Segmentación completada exitosamente")
+        print(f"Resultado shape: {segmented_slice.shape}")
+        print(f"Intensidades resultado: {segmented_slice.min():.2f} - {segmented_slice.max():.2f}")
+        print(f"Valores únicos: {np.unique(segmented_slice)}")
+        
+        # Actualizar la visualización en pantalla
+        transformDataToImage()  # Regenera todas las imágenes PIL
+        currentImage = images[currentImageSlice]  # Actualiza la imagen actual
+        Draw()  # Redibuja en pantalla
+        
+        print("✅ Visualización actualizada")
+        
+        # Limpiar las semillas del slice actual (opcional)
+        # overlay[:, :, currentImageSlice] = 0
+        
+    except Exception as e:
+        print(f"❌ ERROR en segmentación: {e}")
+        import traceback
+        traceback.print_exc()
+
 
 
 buttonLaplacian= tk.Button(toolFrame,text="Laplacian", command=handleLaplacian)
