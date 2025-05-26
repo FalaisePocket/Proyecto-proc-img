@@ -17,7 +17,7 @@ from preprocessing.rescaling import resize_image
 from preprocessing.whiteStripe import whiteStripe
 from preprocessing.zscore import zScore
 from registro.registro import registro
-
+from laplacian.segmentationTwo import laplacian_segmentation
 
 mainWindow=tk.Tk()
 
@@ -51,6 +51,9 @@ x_click=0
 
 overlay = None
 
+currentButton = None
+
+
 #####Listeners####################
 def changeFile():
     global currentFileData
@@ -61,7 +64,7 @@ def changeFile():
     currentFileHeader= currentFile.header
     currentFileData = currentFile.get_fdata()
     print(currentFileHeader)
-    overlay = np.zeros_like(currentFileData, dtype=np.uint8)
+    overlay = np.zeros_like(currentFileData, dtype=np.int8)
     transformDataToImage()
     currentImage = images[currentImageSlice]
 
@@ -128,7 +131,7 @@ def changeImage(value):
     refreshImageFrame()
 
 
-def applyOverlay(img):
+'''def applyOverlay(img):
     """Aplica la matriz overlay a la imagen actual"""
     global overlay, currentImageSlice
     
@@ -138,9 +141,19 @@ def applyOverlay(img):
     for y in range(overlay.shape[0]):
         for x in range(overlay.shape[1]):
             if overlay_slice[y, x] == 1:
+                pixels[x, y] = (255, 0, 0)  # Rojo'''
+def applyOverlay(img):
+    global overlay, currentImageSlice
+    overlay_slice = overlay[:, :, currentImageSlice]
+    pixels = img.load()
+    for y in range(overlay.shape[0]):
+        for x in range(overlay.shape[1]):
+            if overlay_slice[y, x] == 1:
                 pixels[x, y] = (255, 0, 0)  # Rojo
+            elif overlay_slice[y, x] == -1:
+                pixels[x, y] = (0, 255, 0)  # Verde
 
-
+'''
 def handleClick(event):
     global x_click
     global y_click
@@ -148,9 +161,29 @@ def handleClick(event):
     if event.x is not None and event.y is not None:
         x_click=event.x
         y_click=event.y
-        ##drawPixel(event.x, event.y)
+        ##drawPixel(event.x, event.y)'''
+def handleClick(event):
+    global x_click, y_click, currentButton
+    currentButton = event.num
 
+    img_w, img_h = images[currentImageSlice].size
+    widget_w = lienzo.winfo_width()
+    widget_h = lienzo.winfo_height()
 
+    scale_x = img_w / widget_w
+    scale_y = img_h / widget_h
+
+    x_img = int(event.x * scale_x)
+    y_img = int(event.y * scale_y)
+
+    x_click, y_click = x_img, y_img  # guarda coords de imagen, no del widget
+
+    if currentButton == 1:
+        drawPixel(x_img, y_img, value=1)
+    elif currentButton == 3:
+        drawPixel(x_img, y_img, value=-1)
+
+'''
 def handleDrag(event):
     """Maneja el arrastre del mouse para seguir dibujando"""
     global x_click
@@ -158,19 +191,43 @@ def handleDrag(event):
 
     if x_click is not None and y_click is not None:
         drawLine(x_click, y_click, event.x, event.y)
-    x_click, y_click = event.x, event.y
+    x_click, y_click = event.x, event.y'''
+
+def handleDrag(event):
+    global x_click, y_click, currentButton
+    if currentButton is None:
+        return
+
+    img_w, img_h = images[currentImageSlice].size
+    widget_w = lienzo.winfo_width()
+    widget_h = lienzo.winfo_height()
+
+    scale_x = img_w / widget_w
+    scale_y = img_h / widget_h
+
+    x_img = int(event.x * scale_x)
+    y_img = int(event.y * scale_y)
+
+    if x_click is not None and y_click is not None:
+        value = 1 if currentButton == 1 else -1
+        drawLine(x_click, y_click, x_img, y_img, value=value)
+
+    x_click, y_click = x_img, y_img
+
+def handleRelease(event):
+    global currentButton
+    currentButton = None
 
 
 
-
-def drawPixel(x, y):
+def drawPixel(x, y, value=1):
     """Dibuja un píxel rojo en la matriz overlay"""
     global overlay, currentImageSlice   
     if 0 <= x < overlay.shape[1] and 0 <= y < overlay.shape[0]:
-        overlay[y, x, currentImageSlice] = 1  # Marcar píxel en overlay
+        overlay[y, x, currentImageSlice] = value  # Marcar píxel en overlay
         Draw()  # Actualizar la imagen
 
-
+'''
 
 def drawLine(x0, y0, x1, y1):
     """Dibuja una línea entre (x0, y0) y (x1, y1) usando el algoritmo de Bresenham"""
@@ -197,7 +254,31 @@ def drawLine(x0, y0, x1, y1):
             y0 += sy
 
     Draw()  # Actualizar la imagen
+'''
+def drawLine(x0, y0, x1, y1, value=1):
+    global overlay, currentImageSlice
 
+    dx = abs(x1 - x0)
+    dy = abs(y1 - y0)
+    sx = 1 if x0 < x1 else -1
+    sy = 1 if y0 < y1 else -1
+    err = dx - dy
+
+    while True:
+        if 0 <= x0 < overlay.shape[1] and 0 <= y0 < overlay.shape[0]:
+            overlay[y0, x0, currentImageSlice] = value
+
+        if x0 == x1 and y0 == y1:
+            break
+        e2 = 2 * err
+        if e2 > -dy:
+            err -= dy
+            x0 += sx
+        if e2 < dx:
+            err += dx
+            y0 += sy
+
+    Draw()
 
 
 
@@ -208,6 +289,20 @@ def process_image_data(processing_function, *args):
     currentFileData = newData
     transformDataToImage()
     refreshImageFrame()
+
+def apply_registration(moving_path):
+    global currentFileData, currentFile, overlay
+    registro(moving_path)
+    
+    # Cargar imagen registrada
+    registered_img = nib.load('imagen_movil_registrada.nii')
+    currentFile = registered_img
+    currentFileData = registered_img.get_fdata()
+    overlay = np.zeros_like(currentFileData, dtype=np.uint8)
+    transformDataToImage()
+    refreshImageFrame()
+    Draw()
+
 
 
 
@@ -296,8 +391,6 @@ buttonzscore = tk.Button(toolFrame, text="Z-Score", command=lambda: process_imag
 buttonzscore.grid(row=2, column=1, pady=10)
 
 
-
-
 ##filters
 
 buttonMeanFilter = tk.Button(toolFrame, text="Mean Filter", command=lambda: process_image_data(meanFilter))
@@ -311,14 +404,37 @@ buttonMedianFilter.grid(row=1, column=1, pady=10)
 
 ###Registro###############################################
 
-buttonRegistration = tk.Button(toolFrame, text="Registration", command=lambda: process_image_data(registro))
+buttonRegistration = tk.Button(toolFrame, text="Registration", command=lambda: apply_registration(currentFileDir))
 buttonRegistration.grid(row=5, column=0, pady=10) 
 
 
-##################################
+#########Laplacian###############
+
+def handleLaplacian():
+    
+    global currentFileData,overlay, currentImageSlice
+
+    for line in overlay[currentImageSlice]:
+        print(line)
+    '''seeds = overlay[currentImageSlice]
+    newSlice = laplacian_segmentation(currentFileData[currentImageSlice], seeds)
+    currentFileData[currentImageSlice]=newSlice
+
+    print("Semillas:", np.unique(overlay, return_counts=True))
+    print("Intensidades:", currentFileData.min(), currentFileData.max())
+    print("Resultado:", np.unique(newSlice, return_counts=True))
+
+    #newData = processing_function(currentFileData, *args)
+    ##currentFileData = newData
+    
+    transformDataToImage()
+    refreshImageFrame()'''
 
 
+buttonLaplacian= tk.Button(toolFrame,text="Laplacian", command=handleLaplacian)
+buttonLaplacian.grid(row=3, column=1, pady=10)
 
+#################
 ###Layout de imagen#####################################################
 
 
@@ -340,6 +456,12 @@ lienzo = tk.Label(imageFrame)
 lienzo.pack()
 lienzo.bind("<Button-1>", handleClick)
 lienzo.bind("<B1-Motion>", handleDrag)  # Mantener presionado y arrastrar
+
+lienzo.bind("<Button-3>", handleClick)        # Click derecho
+lienzo.bind("<B3-Motion>", handleDrag)        # Arrastrar con botón derecho
+
+lienzo.bind("<ButtonRelease-1>", handleRelease)
+lienzo.bind("<ButtonRelease-3>", handleRelease)
 
 
 ########################################################################

@@ -5,7 +5,7 @@ v=[]
 e=[]
 
 
-def setgraphweight(img):
+def setgraphweight(I, beta):
     sigma = max(np.linalg.norm(I[i] - I[j], ord=np.inf) for i, j in edges)
     
     weights = {}
