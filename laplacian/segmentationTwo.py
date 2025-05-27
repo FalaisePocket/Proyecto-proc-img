@@ -352,8 +352,8 @@ def laplacian_segmentation(image: np.ndarray, seeds: np.ndarray, beta=90, eps=1e
     W = lil_matrix((n_pixels, n_pixels))
     D = np.zeros(n_pixels)
 
-    # Vecindario 4-conectado
-    offsets = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+    # Vecindario 8-conectado
+    offsets = [(1, 0),(1, 1) ,(0, 1),(0, -1),(-1, 0),  (-1, -1), (1, -1),(-1, 1)]
 
     for i in range(height):
         for j in range(width):

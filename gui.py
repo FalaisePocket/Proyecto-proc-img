@@ -540,7 +540,7 @@ def handleLaplacian():
         # REEMPLAZAR el slice en currentFileData
         currentFileData[:, :, currentImageSlice] = segmented_slice
         
-        print("✅ Segmentación completada exitosamente")
+        print("Segmentación completada exitosamente")
         print(f"Resultado shape: {segmented_slice.shape}")
         print(f"Intensidades resultado: {segmented_slice.min():.2f} - {segmented_slice.max():.2f}")
         print(f"Valores únicos: {np.unique(segmented_slice)}")
@@ -550,13 +550,13 @@ def handleLaplacian():
         currentImage = images[currentImageSlice]  # Actualiza la imagen actual
         Draw()  # Redibuja en pantalla
         
-        print("✅ Visualización actualizada")
+        print("Visualización actualizada")
         
         # Limpiar las semillas del slice actual (opcional)
         # overlay[:, :, currentImageSlice] = 0
         
     except Exception as e:
-        print(f"❌ ERROR en segmentación: {e}")
+        print(f"Error en segmentación: {e}")
         import traceback
         traceback.print_exc()
 
