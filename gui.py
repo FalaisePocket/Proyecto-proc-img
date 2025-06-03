@@ -149,9 +149,9 @@ def applyOverlay(img):
     for y in range(overlay.shape[0]):
         for x in range(overlay.shape[1]):
             if overlay_slice[y, x] == 1:
-                pixels[x, y] = (255, 0, 0)  # Rojo
+                pixels[x, y] = (0, 255, 0)  # Verde foreground
             elif overlay_slice[y, x] == -1:
-                pixels[x, y] = (0, 255, 0)  # Verde
+                pixels[x, y] = (255, 0, 0)  # Rojo background
 
 '''
 def handleClick(event):

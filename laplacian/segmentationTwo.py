@@ -63,6 +63,7 @@ def laplacian_segmentation(image: np.ndarray, seeds: np.ndarray, beta=90, eps=1e
     x = spsolve(A.tocsr(), b)
 
     # Clasificación binaria
-    result = np.where(x >= 0, 255, 0).reshape((height, width))
+    mask = np.where(x >= 0, 1, 0).reshape((height, width))
     ##se compara con la imagen original
+    result = mask * image 
     return result
